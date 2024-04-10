@@ -57,6 +57,7 @@ def handle_request(Csocket, Caddress):
                 respond="HTTP/1.1 200 OK\n\n"
                 Csocket.sendall(respond.encode()+image)
                 log_request(Caddress, filename, OK200_STATUS)
+                Csocket.close()
         else:
             with open(filepath, 'rb') as file:
                 file_content = file.read()
