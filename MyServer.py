@@ -2,7 +2,6 @@ import socket
 import threading
 import os
 import datetime
-import base64
 #from flask import Flask,send_file //不能用 :(
 
 # Server configuration
@@ -49,14 +48,22 @@ def handle_request(Csocket, Caddress):
             log_request(Caddress, filename, NOT404_STATUS)
             Csocket.close()
             return
+            
 
         # The filename is found in the directory, access the file
-        with open(filepath, 'rb') as file:
-            file_content = file.read()
-            respond="HTTP/1.1 200 OK\n\n"+file_content.decode('utf-8')+"\n You have successfully reached the contents above, \n (This access record has been stored inside the server_log.txt file [within the same directory])"
-            Csocket.sendall(respond.encode())
-            log_request(Caddress, filename, OK200_STATUS)
-            Csocket.close()
+        if filename=="/images/test.jpg":
+            with open(filepath, 'rb') as file:
+                image=file.read()
+                respond="HTTP/1.1 200 OK\n\n"
+                Csocket.sendall(respond.encode()+image)
+                log_request(Caddress, filename, OK200_STATUS)
+        else:
+            with open(filepath, 'rb') as file:
+                file_content = file.read()
+                respond="HTTP/1.1 200 OK\n\n"+file_content.decode()+"<h5>You have successfully reached the contents above.</h5> <p>(This access record has been stored inside the server_log.txt file [within the same directory])</p>"
+                Csocket.sendall(respond.encode())
+                log_request(Caddress, filename, OK200_STATUS)
+                Csocket.close()
         # Send the HTTP response to the client
         # send_response(Csocket, OK200_STATUS, file_content) 
         # Log the request
