@@ -10,6 +10,10 @@ Request_Counter=1
 WEB_ROOT = 'D:\\Python\\2322Project\\rootFolder'
 LOG_FILE = 'D:\\Python\\2322Project\\server_log.txt'  # Log file path
 
+#Setup the sever configs here
+Server_IP="127.0.0.1"
+Server_Port=8080
+
 # HTTP response status codes
 OK200_STATUS = '200 OK'
 NOT404_STATUS = '404 Not Found'
@@ -35,7 +39,7 @@ def handle_request(Csocket, Caddress):
     filename=headers[0].split()[1]; #取得对应的"路由请求段"
 
     if filename=="/":
-        respond="HTTP/1.1 400 Bad Request\n\n<h1>You're trying to access the default root, there is nothing but a BAD REQUEST here :|</h1> \n if you want to access the index page, click <a href=\"index.html\">here</a> :)  (This access record has been stored inside the server_log.txt file [within the same directory])"
+        respond="HTTP/1.1 400 Bad Request\n\n<h1>You're trying to access the default root, there is nothing but a BAD REQUEST here :|</h1> \n if you want to access the index page, click <a href=\"index.html\">here</a> :)  <p>\n (This access record has been stored inside the server_log.txt file [within the same directory])</p>"
         log_request(Caddress, "[ROOT]", BAD400_STATUS)
         Csocket.sendall(respond.encode())
         Csocket.close()
@@ -45,7 +49,7 @@ def handle_request(Csocket, Caddress):
         filepath = os.path.join(WEB_ROOT, filename.lstrip('/'))
         # Check whether the requested file exists or not
         if not os.path.isfile(filepath): #文件不存在，返回404响应信息给客户端，并记录到log文件中
-            respond="HTTP/1.1 404 NOT FOUND\n\n<h1>404 Error: Sorry, the route (file) you are accessing is not exist :(</h1> \n (This access record has been stored inside the server_log.txt file [within the same directory])"
+            respond="HTTP/1.1 404 NOT FOUND\n\n<h1>404 Error: Sorry, the route (file) you are accessing does not exist :(</h1> \n (This access record has been stored inside the server_log.txt file [within the same directory])"
             Csocket.sendall(respond.encode())
             # send_response(Csocket, NOT404_STATUS, 'The file is not found :(')
             log_request(Caddress, filename, NOT404_STATUS)
@@ -192,11 +196,11 @@ def log_request(Caddress, filename, status_code):
 def start_server():
     #Create the socket for server
     Ssocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    Ssocket.bind(("127.0.0.1", 8080)) #Default using 127.0.0.1:8080
+    Ssocket.bind((Server_IP, Server_Port)) #Default using 127.0.0.1:8080
 
     # Listen for incoming connections
     Ssocket.listen(5)
-    print('Server is now listening on 127.0.0.1:8080 ')
+    print("Server is now listening on",Server_IP,":",Server_Port)
 
     while True:
         # Accept a client connection
