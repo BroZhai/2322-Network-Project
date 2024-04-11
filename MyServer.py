@@ -76,7 +76,7 @@ def handle_request(Csocket, Caddress):
         #         Csocket.sendall(respond.encode()+image)
         #         log_request(Caddress, filename, OK200_STATUS)
         #         Csocket.close()
-        if filename=="/images/test.jpg":
+        if filename.startswith("/images"):
             last_modified=datetime(2022,4,11) #defined a last_modified date for the source file
             with open(filepath, 'rb') as file:
                 if 'If-Modified-Since' in request:
