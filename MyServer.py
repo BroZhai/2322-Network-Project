@@ -1,11 +1,12 @@
 import socket
 import threading
 import os
-import datetime
+from datetime import datetime
 #from flask import Flask,send_file //不能用 :(
 
 # Server configuration
-##路径需要更改
+
+Request_Counter=1
 WEB_ROOT = 'D:\\Python\\2322Project\\rootFolder'
 LOG_FILE = 'D:\\Python\\2322Project\\server_log.txt'  # Log file path
 
@@ -17,6 +18,7 @@ NMD304_STATUS = '304 Not Modified'
 
 #处理客户端Socket的请求
 def handle_request(Csocket, Caddress):
+    global Request_Counter
     # Receive the HTTP request from the client
     request = Csocket.recv(1024).decode()
 
@@ -25,22 +27,23 @@ def handle_request(Csocket, Caddress):
     ClientPort=Caddress[1]
     
     #Output section within the console
-    print('Request from',ClientIP+':',ClientPort)
+    print('Request',Request_Counter,'from',ClientIP,':',ClientPort)
     print(request)
+    Request_Counter+=1
 
     headers=request.split('\n'); #通过'\n'对request进行分割
     filename=headers[0].split()[1]; #取得对应的"路由请求段"
 
     if filename=="/":
-        respond="HTTP/1.1 400 Bad Request\n\n<h1>You're trying to access the default root, there is nothing but a BAD REQUEST here :|</h1> \n if you want to access the index page, click <a href=\"index.html\">here</a> :) \n (This access record has been stored inside the server_log.txt file [within the same directory])"
+        respond="HTTP/1.1 400 Bad Request\n\n<h1>You're trying to access the default root, there is nothing but a BAD REQUEST here :|</h1> \n if you want to access the index page, click <a href=\"index.html\">here</a> :)  (This access record has been stored inside the server_log.txt file [within the same directory])"
         log_request(Caddress, "[ROOT]", BAD400_STATUS)
         Csocket.sendall(respond.encode())
         Csocket.close()
         return
     else:
-        # Extract the requested file name from the request
+        # User did send a path for requesting
         filepath = os.path.join(WEB_ROOT, filename.lstrip('/'))
-        # Check if the requested file exists
+        # Check whether the requested file exists or not
         if not os.path.isfile(filepath): #文件不存在，返回404响应信息给客户端，并记录到log文件中
             respond="HTTP/1.1 404 NOT FOUND\n\n<h1>404 Error: Sorry, the route (file) you are accessing is not exist :(</h1> \n (This access record has been stored inside the server_log.txt file [within the same directory])"
             Csocket.sendall(respond.encode())
@@ -50,14 +53,57 @@ def handle_request(Csocket, Caddress):
             return
             
 
-        # The filename is found in the directory, access the file
+        # return the image files.
+        # if filename=="/images/test.jpg":
+        #     last_modified=datetime(2024,4,11) #defined a last_modified date for the source file
+        #     with open(filepath, 'rb') as file:
+        #         if 'If-Modified-Since' in request:
+        #             splited_lines = request.split('\r\n')
+        #             for line in splited_lines:
+        #                 if line.startswith('If-Modified-Since:'):
+        #                     modified_str = line.split(':')[1].strip() #Extract the date from the Client's request
+        #                     break
+        #             if_modifiedTime = datetime.strptime(modified_str, '%a, %d %b %Y %H:%M:%S %Z')
+        #             if if_modifiedTime >= last_modified:
+        #                 # 构建304 Not Modified响应
+        #                 response = 'HTTP/1.1 304 Not Modified\r\n\r\n'
+        #                 log_request(Caddress,filename,NMD304_STATUS)
+        #                 Csocket.send(response.encode())
+        #         image=file.read()
+        #         respond="HTTP/1.1 200 OK\n\n"
+        #         respond+="Content-Type: image/jpeg\r\n"
+        #         respond+="Last-Modified: {}\r\n\r\n".format(last_modified.strftime('%a, %d %b %Y %H:%M:%S %Z'))
+        #         Csocket.sendall(respond.encode()+image)
+        #         log_request(Caddress, filename, OK200_STATUS)
+        #         Csocket.close()
         if filename=="/images/test.jpg":
+            last_modified=datetime(2022,4,11) #defined a last_modified date for the source file
             with open(filepath, 'rb') as file:
-                image=file.read()
-                respond="HTTP/1.1 200 OK\n\n"
-                Csocket.sendall(respond.encode()+image)
-                log_request(Caddress, filename, OK200_STATUS)
-                Csocket.close()
+                if 'If-Modified-Since' in request:
+                    splited_lines = request.split('\r\n')
+                    for lines in splited_lines:
+                        if lines.startswith('If-Modified-Since:'):
+                            modified_str = lines.split(':')[1].strip() #Extract the date from the Client's request
+                            break
+                    if_modifiedTime = datetime.strptime(modified_str, '%a, %d %b %Y %H:%M:%S %Z')
+                    if if_modifiedTime >= last_modified:
+                        image=file.read()
+                        respond="HTTP/1.1 304 Not Modified\n\n"
+                        Csocket.sendall(respond.encode()+image)
+                        log_request(Caddress, filename, NMD304_STATUS)
+                        Csocket.close()
+                    else:
+                        image=file.read()
+                        respond="HTTP/1.1 200 OK\n\n"
+                        Csocket.sendall(respond.encode()+image)
+                        log_request(Caddress, filename, OK200_STATUS)
+                        Csocket.close()
+                else:
+                    image=file.read()
+                    respond="HTTP/1.1 200 OK\n\n"
+                    Csocket.sendall(respond.encode()+image)
+                    log_request(Caddress, filename, OK200_STATUS)
+                    Csocket.close()
         else:
             with open(filepath, 'rb') as file:
                 file_content = file.read()
@@ -65,6 +111,29 @@ def handle_request(Csocket, Caddress):
                 Csocket.sendall(respond.encode())
                 log_request(Caddress, filename, OK200_STATUS)
                 Csocket.close()
+                # if 'If-Modified-Since' in request:
+                #     splited_lines = request.split('\r\n')
+                #     for line in splited_lines:
+                #         if line.startswith('If-Modified-Since:'):
+                #             modified_str = line.split(':')[1].strip()  # 从客户端请求中提取日期
+                #             break
+                #     if_modifiedTime = datetime.strptime(modified_str, '%a, %d %b %Y %H:%M:%S %Z')
+                #     if if_modifiedTime >= last_modified:
+                #         # 构建304 Not Modified响应
+                #         log_request(Caddress, filename, NMD304_STATUS)
+        #         image = file.read()
+        #         respond = "HTTP/1.1 200 OK\n\n"
+        #         respond += "Content-Type: image/jpeg\r\n"   
+        #         #respond += "Last-Modified: {}\r\n\r\n".format(last_modified.strftime('%a, %d %b %Y %H:%M:%S %Z'))
+        #         Csocket.sendall(respond.encode() + image)
+        #         log_request(Caddress, filename, OK200_STATUS)
+        #         Csocket.close()
+        # else:
+        #     with open(filepath, 'rb') as file:
+        #         file_content = file.read()
+        #         respond="HTTP/1.1 200 OK\n\n"+file_content.decode()+"<h5>You have successfully reached the contents above.</h5> <p>(This access record has been stored inside the server_log.txt file [within the same directory])</p>"
+        #         Csocket.sendall(respond.encode())
+        #         log_request(Caddress, filename, OK200_STATUS)   
         # Send the HTTP response to the client
         # send_response(Csocket, OK200_STATUS, file_content) 
         # Log the request
@@ -108,7 +177,7 @@ def send_response(Csocket, status_code, content):
 #记录请求到log文件的函数
 def log_request(Caddress, filename, status_code):
     # Generate the current date and time for the log entry
-    current_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
     # Format the log entry
     log_entry = f'{Caddress[0]}:{Caddress[1]} - [{current_time}] "{filename}" {status_code}'
@@ -123,7 +192,7 @@ def log_request(Caddress, filename, status_code):
 def start_server():
     #Create the socket for server
     Ssocket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    Ssocket.bind(("127.0.0.1", 8080)) #Setup server's ip and port
+    Ssocket.bind(("127.0.0.1", 8080)) #Default using 127.0.0.1:8080
 
     # Listen for incoming connections
     Ssocket.listen(5)
