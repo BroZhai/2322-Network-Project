@@ -7,8 +7,8 @@ from datetime import datetime
 Request_Counter=1
 
 ## Change the directory here
-WEB_ROOT = r'D:\Python\2322Project\rootFolder' # Define the path for "Server Folder" (location)
-LOG_FILE = r'D:\Python\2322Project\server_log.txt'  # Define the path for the exported Log file 
+WEB_ROOT = r'D:\Python\2322Git\rootFolder' # Define the path for "Server Folder" (location)
+LOG_FILE = r'D:\Python\2322Git\server_log.txt'  # Define the path for the exported Log file 
 # (do remember to add the filename for the log file. e.g: \server_log.txt)
 
 # Setup the server address and opening here
