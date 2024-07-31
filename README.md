@@ -1,6 +1,6 @@
 # 2322-Network-Project
 #### 孩子们，我回来了 :)
-一个用Python socket实现的小服务器，也是这个b课的project
+一个用Python socket实现的小服务器，也是这个课的project
 
 This program has used socket for HTTP Server Programing
 ps: the "rootFolder" is the root of the server where all the requested resources are stored in it.
